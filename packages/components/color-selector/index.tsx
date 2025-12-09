@@ -78,7 +78,7 @@ const ColorSelector = ({ control, errors }: any) => {
                   setShowColorPicker(false);
                   setNewColor("#ffffff");
                 }}
-                className="px-3 py-1 bg-gray-700 text-white rounded-md text-sm gap-2"
+                className="px-3 py-1 bg-gray-600 text-white rounded-md text-sm gap-2"
                 >
                   Add
                 </button>
