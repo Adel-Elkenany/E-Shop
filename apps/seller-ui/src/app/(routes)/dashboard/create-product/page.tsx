@@ -6,6 +6,8 @@ import ColorSelector from "packages/components/color-selector";
 
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import CustomSpecifications from "packages/components/custom-specifications";
+import CustomProperties from "packages/components/Custom-properties";
 
 const Page = () => {
   const {
@@ -79,6 +81,9 @@ const Page = () => {
       <div className="py-4 w-full flex gap-6">
         {/* Left side - image upload section*/}
         <div className="md:w-[35%]">
+          <label className="block text-sm font-medium text-gray-200 mb-3">
+            Product Images *
+          </label>
           {images?.length > 0 && (
             <ImagePlaceholder
               setOpenImageModal={setOpenImageModal}
@@ -217,9 +222,50 @@ const Page = () => {
               </div>
 
               {/* Color */} 
-              <div className="mt-4">
-                <ColorSelector control={control} errors={errors} />
+              <div className="mt-4 mb-12">
+                <ColorSelector control={control}  errors={errors} />
               </div>
+
+                {/* Specifications */}
+              <div className="mt-4">
+                <CustomSpecifications control={control} errors={errors} />
+              </div>
+
+                {/* Properties */}
+              <div className="mt-4">
+                <CustomProperties control={control} errors={errors} />
+              </div>
+
+              {/* Cash On Delivery */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-200">
+                  Cash On Delivery *
+                </label>
+                <select
+                  {...register("cash_on_delivery", {
+                    required: "Cash on delivery is required",
+                  })}
+                  defaultValue="yes"
+                  className="mt-2 block w-full bg-black rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="yes" className="bg-black">Yes</option>
+                  <option value="no" className="bg-black">No</option>
+                  
+                </select>
+                {errors.cashOnDelivery && (
+                  <span className="text-red-500 text-sm">
+                    {errors.cashOnDelivery.message as string}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Product Category  */}
+            <div className="w-2/4">
+                <label className="block text-sm font-medium text-gray-200">
+                  Product Category *
+                </label>
+                
             </div>
           </div>
         </div>
