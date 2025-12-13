@@ -19,7 +19,7 @@ const ColorSelector = ({ control, errors }: any) => {
   const [newColor, setNewColor] = useState("#ffffff");
 
   return (
-    <div className="mt-2 mb-8">
+    <div className="mt-2 mb-4">
       <label className="block text-sm font-semibold text-gray-300 mb-1">
         Colors
       </label>
