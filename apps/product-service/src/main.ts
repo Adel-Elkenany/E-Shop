@@ -7,7 +7,8 @@ import cors from 'cors';
 // process.on('uncaughtException', (err) => {
 //     console.error('Uncaught Exception thrown:', err);
 // });
-import { errorMiddleware } from '@packages/error-handler/error-middleware';
+// Use a relative path for the local workspace package so webpack can resolve it reliably
+import { errorMiddleware } from '../../../packages/error-handler/error-middleware';
 import cookieParser from 'cookie-parser';
 // import swaggerUi from "swagger-ui-express"
 // const swaggerDocument = require('./swagger-output.json');
