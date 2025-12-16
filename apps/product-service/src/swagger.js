@@ -2,15 +2,15 @@ const swaggerAutogen = require("swagger-autogen");
 
 const doc = {
     info: {
-        title: "Auth Service API",
-        description: "Automatically generated swagger documentation for Auth Service",
+        title: "Product Service API",
+        description: "Automatically generated swagger documentation for Product Service",
         version: "1.0.0",
     },
-    host: "localhost:6001",
+    host: "localhost:6002",
     schemes: ["http"],
 };
 
 const outputFile = "./swagger-output.json";
-const endpointsFiles = ["./routes/auth.router.ts"];
+const endpointsFiles = ["./routes/product.router.ts"];
 
 swaggerAutogen()(outputFile, endpointsFiles, doc);

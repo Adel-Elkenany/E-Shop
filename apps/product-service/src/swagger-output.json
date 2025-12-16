@@ -1,0 +1,38 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Product Service API",
+    "description": "Automatically generated swagger documentation for Product Service",
+    "version": "1.0.0"
+  },
+  "host": "localhost:6002",
+  "basePath": "/Product/api",
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/get-categories": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/{get-categories{where{id:req.params.id}": {
+      "delete": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    }
+  }
+}

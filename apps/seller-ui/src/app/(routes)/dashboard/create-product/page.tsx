@@ -34,7 +34,6 @@ const Page = () => {
     );
     return selectedCategory ? selectedCategory.subCategories : null;
   }, [categories, watch("category")]);
-
   const onSubmit = (data: any) => {
     console.log(data);
   };

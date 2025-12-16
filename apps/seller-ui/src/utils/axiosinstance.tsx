@@ -33,7 +33,7 @@ axiosInstance.interceptors.request.use(
 );
 
 // handle expired token and refresh logic
-axiosInstance.interceptors.request.use(
+axiosInstance.interceptors.response.use(
     (Response) => Response,
     async (error) => {
         const originalRequest = error.config;
