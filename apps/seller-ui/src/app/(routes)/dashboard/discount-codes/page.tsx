@@ -1,5 +1,6 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import DeleteDiscountCodeModal from "apps/seller-ui/src/shared/components/modals/delete.discount.code";
 import axiosInstance from "apps/seller-ui/src/utils/axiosinstance";
 import { AxiosError } from "axios";
 import { ChevronRightIcon, Pencil, Plus, Trash2, X } from "lucide-react";
@@ -12,6 +13,8 @@ const Page = () => {
   const [showModal, setShowModal] = useState(false);
   const [discountId, setDiscountId] = useState<string>("");
   const queryClient = useQueryClient();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedDiscount, setSelectedDiscount] = useState<any>();
 
   const { data: discountCodes = [], isLoading } = useQuery({
     queryKey: ["shop-discounts"],
@@ -21,10 +24,10 @@ const Page = () => {
     },
   });
 
-  const editDiscount = (id: string) => {
-    setShowModal(true);
-    setDiscountId(id);
-  };
+  // const editDiscount = (id: string) => {
+  //   setShowModal(true);
+  //   setDiscountId(id);
+  // };
 
   const {
     register,
@@ -60,16 +63,16 @@ const Page = () => {
       queryClient.invalidateQueries({ queryKey: ["shop-discounts"] });
       toast.success("Discount code deleted successfully");
       setDiscountId("");
+      setShowDeleteModal(false);
     },
     onError: (error: any) => {
         toast.error(error.response?.data?.message || "Failed to delete discount code");
     }
   });
 
-  const deleteDiscount = (id: string) => {
-    if(window.confirm("Are you sure you want to delete this discount code?")){
-        deleteDiscountCodeMutation.mutate(id);
-    }
+  const deleteDiscount = (discount: any) => {
+   setShowDeleteModal(true);
+   setSelectedDiscount(discount);
   };
 
   const onSubmit = (data: any) => {
@@ -143,15 +146,15 @@ const Page = () => {
                   </td>
                   <td className="px-4 py-3">{discount.discountCode}</td>
                   <td className="px-4 py-3">
-                     <button
+                     {/* <button
                       disabled
                       title="Not implemented yet"
                       className="bg-indigo-600 cursor-not-allowed text-white px-2 py-2 font-semibold rounded-full ml-2 transition-all duration-300"
                     >
                       <Pencil className="w-5 h-5" />
-                    </button>
+                    </button> */}
                     <button
-                      onClick={() => deleteDiscount(discount.id)}
+                      onClick={() => deleteDiscount(discount)}
                       className="bg-red-600 text-white px-2 py-2 font-semibold rounded-full ml-2 hover:bg-red-700 hover:scale-105 transition-all duration-300"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -279,6 +282,16 @@ const Page = () => {
           </div>
         </div>
       )}
+
+      {
+       showDeleteModal && selectedDiscount && (
+        <DeleteDiscountCodeModal
+        discount={selectedDiscount}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={() => deleteDiscountCodeMutation.mutate(selectedDiscount.id)}
+        />
+       )
+      }
     </div>
   );
 };

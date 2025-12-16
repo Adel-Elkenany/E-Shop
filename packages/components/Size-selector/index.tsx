@@ -18,7 +18,7 @@ const SizeSelector = ({ control }: { control: any }) => {
                         <button
                           type="button"
                           key={size}
-                          className={`px-4 py-2 border border-gray-600 rounded-md transition-colors duration-200 
+                          className={`px-2 py-1 border border-gray-600 rounded-md transition-colors duration-200 
                             ${isSelected 
                               ? "bg-blue-600 text-black font-semibold" 
                               : "bg-black text-gray-300 hover:bg-gray-800"}`}

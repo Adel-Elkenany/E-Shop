@@ -9,6 +9,8 @@ import CustomSpecifications from "packages/components/custom-specifications";
 import CustomProperties from "packages/components/Custom-properties";
 import RichTextEditor from "packages/components/rech-text-editor";
 import SizeSelector from "packages/components/Size-selector";
+import axiosInstance from "apps/seller-ui/src/utils/axiosinstance";
+import { useQuery } from "@tanstack/react-query";
 
 const Page = () => {
   const {
@@ -37,6 +39,14 @@ const Page = () => {
   const onSubmit = (data: any) => {
     console.log(data);
   };
+
+  const { data: discountCodes = [], isLoading: discountLoading } = useQuery({
+    queryKey: ["shop-discounts"],
+    queryFn: async () => {
+      const res = await axiosInstance.get("/product/api/get-discount-codes");
+      return res.data.discountCodes || [];
+    },
+  });
 
   useEffect(() => {
     (async () => {
@@ -173,7 +183,6 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
               {/* Product Tags input */}
               <div className="mt-4">
                 <Input
@@ -189,7 +198,6 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
               {/* Product Warranty input */}
               <div className="mt-4">
                 <Input
@@ -205,7 +213,6 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
               {/* Product Slug input */}
               <div className="mt-4">
                 <Input
@@ -234,7 +241,6 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
               {/* Brand */}
               <div className="mt-4">
                 <Input
@@ -250,22 +256,10 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
               {/* Color */}
               <div className="mt-4 mb-2">
                 <ColorSelector control={control} errors={errors} />
               </div>
-
-              {/* Specifications */}
-              <div className="mt-4">
-                <CustomSpecifications control={control} errors={errors} />
-              </div>
-
-              {/* Properties */}
-              <div className="mt-4">
-                <CustomProperties control={control} errors={errors} />
-              </div>
-
               {/* Cash On Delivery */}
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-200">
@@ -292,7 +286,6 @@ const Page = () => {
                 )}
               </div>
             </div>
-
             {/* Product Category & Subcategory */}
             <div className="w-2/4">
               <div>
@@ -381,41 +374,6 @@ const Page = () => {
                 )}
               </div>
 
-              {/* Product Details Description */}
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-200">
-                  Product Details Description *
-                </label>
-                <Controller
-                  control={control}
-                  name="product_detailed_description"
-                  rules={{
-                    required: "Product detailed description is required",
-                    validate: (value) => {
-                      const wordCount = value
-                        ?.trim()
-                        .split(/\s+/)
-                        .filter((word: string) => word).length;
-                      return (
-                        wordCount >= 100 ||
-                        "Product detailed description must be at least 100 words"
-                      );
-                    },
-                  }}
-                  render={({ field }) => (
-                    <RichTextEditor
-                      value={field.value}
-                      onChange={(value) => field.onChange(value)}
-                    />
-                  )}
-                />
-                {errors.product_detailed_description && (
-                  <span className="text-red-500 text-sm">
-                    {errors.product_detailed_description.message as string}
-                  </span>
-                )}
-              </div>
-
               {/* Product Video */}
               <div className="mt-4">
                 <Input
@@ -423,7 +381,8 @@ const Page = () => {
                   placeholder="https://youtu.com/"
                   {...register("product_video", {
                     pattern: {
-                      value: /https?:\/\/(?:[a-z0-9-]+\.)?[a-z0-9-]+(?:\/[a-z0-9-]+)*\.(?:[a-z]{2,})+(?:\/[^\s]*)?/i,
+                      value:
+                        /https?:\/\/(?:[a-z0-9-]+\.)?[a-z0-9-]+(?:\/[a-z0-9-]+)*\.(?:[a-z]{2,})+(?:\/[^\s]*)?/i,
                       message: "Invalid URL format",
                     },
                   })}
@@ -435,7 +394,6 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
               {/* Product Reguler Price */}
               <div className="mt-4">
                 <Input
@@ -457,7 +415,6 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
               {/* sale price */}
               <div className="mt-4">
                 <Input
@@ -479,7 +436,6 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
               {/* product stock */}
               <div className="mt-4">
                 <Input
@@ -502,59 +458,66 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
               {/* Product size */}
               <div className="mt-4">
-                <SizeSelector control={control}/>
+                <SizeSelector control={control} />
               </div>
-
               {/* Select Discount Code */}
               <div className="mt-4">
-                <Input
-                  label="Select  (Optional)"
-                  placeholder="Discount Code"
-                  {...register("discount_code", {
-                    valueAsNumber: true,
-                    min: {
-                      value: 1,
-                      message: "Discount must be greater than 0",
-                    },
-                    required: "Discount is required",
-                  })}
-                  className="w-full border-[1px] border-gray-600 bg-black p-2 rounded-md text-white outline-none"
-                />
-                {errors.discount && (
-                  <span className="text-red-500 text-sm">
-                    {errors.discount.message as string}
-                  </span>
+                <label className="block text-sm font-medium text-gray-200 mb-2">Select Discount Code</label>
+                {discountLoading ? (
+                  <p className="text-gray-400">Loading discount codes...</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {discountCodes?.map((code: any) => (
+                      <button
+                        key={code.id}
+                        type="button"
+                        className={`px-3 py-2 bg-black rounded-md text-sm font-medium border transition-colors ${
+                          (watch("discountCodes") || []).includes(code.id)
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-black text-white border-gray-600 hover:bg-inherit"
+                        }`}
+                        onClick={() => {
+                          const currentSelection = watch("discountCodes") || [];
+                          const updatedSelection = currentSelection.includes(code.id)
+                            ? currentSelection.filter((id: string) => id !== code.id)
+                            : [...currentSelection, code.id];
+                          setValue("discountCodes", updatedSelection);
+                        }}
+                      >
+                       {code.discountCode} {code.discountType === 'percentage' ? `(${code.discountValue}%)` : `($${code.discountValue})`}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
           </div>
         </div>
       </div>
-                 <div className="flex  justify-end mt-6 gap-3">
-                {isChanged && (
-                 <button
-                 type="button"
-                 className="px-4 py-3 flex border-[1px] border-gray-600 text-white hover:bg-gray-600 transition-colors rounded-md"
-                 onClick={handleSaveDraft}
-                 >
-                  <LucideDraftingCompass className="mr-2"/>
-                  Save Draft
-                 </button>
-                )}
+      <div className="flex  justify-end mt-6 gap-3">
+        {isChanged && (
+          <button
+            type="button"
+            className="px-4 py-3 flex border-[1px] border-gray-600 text-white hover:bg-gray-600 transition-colors rounded-md"
+            onClick={handleSaveDraft}
+          >
+            <LucideDraftingCompass className="mr-2" />
+            Save Draft
+          </button>
+        )}
 
-                <button
-                type="submit"
-                disabled={isLoading}
-                className="px-4 py-3 flex bg-blue-700 text-white hover:bg-blue-500 transition-colors rounded-md"
-                onClick={handleSubmit(onSubmit)}
-                >
-                 <Save className="mr-2"/>
-                 {isLoading ? "Creating..." : "Create"}
-                </button>
-            </div>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="px-4 py-3 flex bg-blue-700 text-white hover:bg-blue-500 transition-colors rounded-md"
+          onClick={handleSubmit(onSubmit)}
+        >
+          <Save className="mr-2" />
+          {isLoading ? "Creating..." : "Create"}
+        </button>
+      </div>
     </form>
   );
 };
