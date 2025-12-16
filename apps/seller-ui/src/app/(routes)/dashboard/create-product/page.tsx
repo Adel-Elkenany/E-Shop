@@ -63,32 +63,60 @@ const Page = () => {
     })();
   }, []);
 
-  const handleImageChange = (file: File | null, index: number) => {
-    const updatedImage = [...images];
-    updatedImage[index] = file;
+  const convertFileToBase64 = (file: File) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
 
-    if (index === images.length - 1 && images.length < 10) {
-      updatedImage.push(null);
+  const handleImageChange = async (file: File | null, index: number) => {
+    if (!file) return;
+
+    try {
+      const fileName = await convertFileToBase64(file);
+
+      const response = await axiosInstance.post(
+        "/product/api/upload-product-image",
+        {fileName}
+      );
+
+      const updateImage = [...images];
+      updateImage[index] = response.data.file_url;
+      
+      if(index === images.length - 1 && updateImage.length < 8){
+        updateImage.push(null);
+      }
+      setImages(updateImage);
+      setValue("images", updateImage);
+    } catch (error) {
+      console.error("Failed to upload image", error);
     }
-    setImages(updatedImage);
-    setValue("images", updatedImage);
   };
 
   const handleImageRemove = (index: number) => {
-    setImages((prevImages) => {
-      let updatedImages = [...prevImages];
+    try {
+     const updatedImages = [...images];
 
-      if (index === -1) {
-        updatedImages[0] = null;
-      } else {
-        updatedImages.splice(index, 1);
-      }
-      if (!updatedImages.includes(null) && updatedImages.length < 8) {
-        updatedImages.push(null);
-      }
-      return updatedImages;
-    });
-    setValue("images", images);
+     const imageToDelete = updatedImages[index];
+
+     if(imageToDelete && typeof imageToDelete === "string"){
+      // Delete our image
+     }
+
+     updatedImages.splice(index, 1);
+
+     // Add null placeholder
+     if(!updatedImages.includes(null) && updatedImages.length < 8){
+      updatedImages.push(null);
+     }
+     setImages(updatedImages);
+     setValue("images", updatedImages);
+    } catch (error) {
+     console.error("Failed to remove image", error);
+    }
   };
 
   const handleSaveDraft = () => {
@@ -464,7 +492,9 @@ const Page = () => {
               </div>
               {/* Select Discount Code */}
               <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-200 mb-2">Select Discount Code</label>
+                <label className="block text-sm font-medium text-gray-200 mb-2">
+                  Select Discount Code
+                </label>
                 {discountLoading ? (
                   <p className="text-gray-400">Loading discount codes...</p>
                 ) : (
@@ -480,13 +510,20 @@ const Page = () => {
                         }`}
                         onClick={() => {
                           const currentSelection = watch("discountCodes") || [];
-                          const updatedSelection = currentSelection.includes(code.id)
-                            ? currentSelection.filter((id: string) => id !== code.id)
+                          const updatedSelection = currentSelection.includes(
+                            code.id
+                          )
+                            ? currentSelection.filter(
+                                (id: string) => id !== code.id
+                              )
                             : [...currentSelection, code.id];
                           setValue("discountCodes", updatedSelection);
                         }}
                       >
-                       {code.discountCode} {code.discountType === 'percentage' ? `(${code.discountValue}%)` : `($${code.discountValue})`}
+                        {code.discountCode}{" "}
+                        {code.discountType === "percentage"
+                          ? `(${code.discountValue}%)`
+                          : `($${code.discountValue})`}
                       </button>
                     ))}
                   </div>
