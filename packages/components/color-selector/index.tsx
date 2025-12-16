@@ -19,7 +19,7 @@ const ColorSelector = ({ control, errors }: any) => {
   const [newColor, setNewColor] = useState("#ffffff");
 
   return (
-    <div className="mt-2 mb-8">
+    <div className="mt-2 mb-4">
       <label className="block text-sm font-semibold text-gray-300 mb-1">
         Colors
       </label>
@@ -59,7 +59,7 @@ const ColorSelector = ({ control, errors }: any) => {
               className="w-6 h-6 rounded-full p-2 my-1 flex items-center justify-center hover:shadow-sm hover:shadow-[#80deea]
               border border-gray-600 bg-gray-800 hover:bg-gray-700 transition-all duration-300"
             >
-              <Plus className="w-4 h-4 text-gray-200" />
+              <Plus className="w-6 h-6 text-gray-200" />
             </button>
 
             {/* Color picker */}

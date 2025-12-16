@@ -1,13 +1,16 @@
 "use client";
 import ImagePlaceholder from "apps/seller-ui/src/shared/components/image-placeholder";
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon, LucideDraftingCompass, Save } from "lucide-react";
 import Input from "packages/components/inputs";
 import ColorSelector from "packages/components/color-selector";
-
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import React, { useEffect, useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import CustomSpecifications from "packages/components/custom-specifications";
 import CustomProperties from "packages/components/Custom-properties";
+import RichTextEditor from "packages/components/rech-text-editor";
+import SizeSelector from "packages/components/Size-selector";
+import axiosInstance from "apps/seller-ui/src/utils/axiosinstance";
+import { useQuery } from "@tanstack/react-query";
 
 const Page = () => {
   const {
@@ -20,40 +23,104 @@ const Page = () => {
   } = useForm();
 
   const [openImageModal, setOpenImageModal] = useState(false);
-  const [isChange, setIsChange] = useState(false);
+  const [isChanged, setIsChanged] = useState(true);
   const [images, setImages] = useState<(File | null)[]>([null]);
-  const [loading, setLoading] = useState(false);
-
+  const [isLoading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<any[] | null>(null);
+  const [isError, setIsError] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const subcategories = useMemo(() => {
+    if (!categories) return null;
+    const selectedCategory = categories.find(
+      (c) => c.value === watch("category")
+    );
+    return selectedCategory ? selectedCategory.subCategories : null;
+  }, [categories, watch("category")]);
   const onSubmit = (data: any) => {
     console.log(data);
   };
 
-  const handleImageChange = (file: File | null, index: number) => {
-    const updatedImage = [...images];
-    updatedImage[index] = file;
+  const { data: discountCodes = [], isLoading: discountLoading } = useQuery({
+    queryKey: ["shop-discounts"],
+    queryFn: async () => {
+      const res = await axiosInstance.get("/product/api/get-discount-codes");
+      return res.data.discountCodes || [];
+    },
+  });
 
-    if (index === images.length - 1 && images.length < 10) {
-      updatedImage.push(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        const mod = await import("apps/seller-ui/src/utils/categories");
+        const shopCategories = mod.shopCategories || [];
+        setCategories(shopCategories);
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+        setIsError(true);
+      } finally {
+        setIsInitialized(true);
+      }
+    })();
+  }, []);
+
+  const convertFileToBase64 = (file: File) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleImageChange = async (file: File | null, index: number) => {
+    if (!file) return;
+
+    try {
+      const fileName = await convertFileToBase64(file);
+
+      const response = await axiosInstance.post(
+        "/product/api/upload-product-image",
+        {fileName}
+      );
+
+      const updateImage = [...images];
+      updateImage[index] = response.data.file_url;
+      
+      if(index === images.length - 1 && updateImage.length < 8){
+        updateImage.push(null);
+      }
+      setImages(updateImage);
+      setValue("images", updateImage);
+    } catch (error) {
+      console.error("Failed to upload image", error);
     }
-    setImages(updatedImage);
-    setValue("images", updatedImage);
   };
 
   const handleImageRemove = (index: number) => {
-    setImages((prevImages) => {
-      let updatedImages = [...prevImages];
+    try {
+     const updatedImages = [...images];
 
-      if (index === -1) {
-        updatedImages[0] = null;
-      } else {
-        updatedImages.splice(index, 1);
-      }
-      if (!updatedImages.includes(null) && updatedImages.length < 8) {
-        updatedImages.push(null);
-      }
-      return updatedImages;
-    });
-    setValue("images", images);
+     const imageToDelete = updatedImages[index];
+
+     if(imageToDelete && typeof imageToDelete === "string"){
+      // Delete our image
+     }
+
+     updatedImages.splice(index, 1);
+
+     // Add null placeholder
+     if(!updatedImages.includes(null) && updatedImages.length < 8){
+      updatedImages.push(null);
+     }
+     setImages(updatedImages);
+     setValue("images", updatedImages);
+    } catch (error) {
+     console.error("Failed to remove image", error);
+    }
+  };
+
+  const handleSaveDraft = () => {
+    console.log("Save draft");
   };
 
   return (
@@ -115,20 +182,20 @@ const Page = () => {
             {/* Product Details */}
             <div className="w-2/4">
               {/* Product title input */}
-             <div>
-               <Input
-                label={"Product Title" + " " + "*"}
-                placeholder="Enter Product Title"
-                {...register("title", {
-                  required: "Product title is required",
-                })}
-              />
-              {errors.title && (
-                <span className="text-red-500 text-sm">
-                  {errors.title.message as string}
-                </span>
-              )}
-             </div>
+              <div>
+                <Input
+                  label={"Product Title" + " " + "*"}
+                  placeholder="Enter Product Title"
+                  {...register("title", {
+                    required: "Product title is required",
+                  })}
+                />
+                {errors.title && (
+                  <span className="text-red-500 text-sm">
+                    {errors.title.message as string}
+                  </span>
+                )}
+              </div>
               {/* Product description input */}
               <div className="mt-4">
                 <Input
@@ -144,7 +211,6 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
               {/* Product Tags input */}
               <div className="mt-4">
                 <Input
@@ -160,7 +226,6 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
               {/* Product Warranty input */}
               <div className="mt-4">
                 <Input
@@ -176,7 +241,6 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
               {/* Product Slug input */}
               <div className="mt-4">
                 <Input
@@ -186,7 +250,8 @@ const Page = () => {
                     required: "Product slug is required",
                     pattern: {
                       value: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-                      message: "Invalid slug format! Use only lowercase letters and numbers.",
+                      message:
+                        "Invalid slug format! Use only lowercase letters and numbers.",
                     },
                     minLength: {
                       value: 3,
@@ -204,7 +269,6 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
               {/* Brand */}
               <div className="mt-4">
                 <Input
@@ -220,22 +284,10 @@ const Page = () => {
                   </span>
                 )}
               </div>
-
-              {/* Color */} 
-              <div className="mt-4 mb-12">
-                <ColorSelector control={control}  errors={errors} />
+              {/* Color */}
+              <div className="mt-4 mb-2">
+                <ColorSelector control={control} errors={errors} />
               </div>
-
-                {/* Specifications */}
-              <div className="mt-4">
-                <CustomSpecifications control={control} errors={errors} />
-              </div>
-
-                {/* Properties */}
-              <div className="mt-4">
-                <CustomProperties control={control} errors={errors} />
-              </div>
-
               {/* Cash On Delivery */}
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-200">
@@ -248,9 +300,12 @@ const Page = () => {
                   defaultValue="yes"
                   className="mt-2 block w-full bg-black rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                 >
-                  <option value="yes" className="bg-black">Yes</option>
-                  <option value="no" className="bg-black">No</option>
-                  
+                  <option value="yes" className="bg-black">
+                    Yes
+                  </option>
+                  <option value="no" className="bg-black">
+                    No
+                  </option>
                 </select>
                 {errors.cashOnDelivery && (
                   <span className="text-red-500 text-sm">
@@ -259,16 +314,246 @@ const Page = () => {
                 )}
               </div>
             </div>
-
-            {/* Product Category  */}
+            {/* Product Category & Subcategory */}
             <div className="w-2/4">
+              <div>
                 <label className="block text-sm font-medium text-gray-200">
                   Product Category *
                 </label>
-                
+                {isLoading ? (
+                  <p className="text-gray-200 mt-2">Loading categories...</p>
+                ) : isError ? (
+                  <p className="text-red-500 mt-2">
+                    Failed to load categories.
+                  </p>
+                ) : (
+                  <Controller
+                    control={control}
+                    name="category"
+                    rules={{ required: "Product category is required" }}
+                    render={({ field }) => (
+                      <select
+                        {...field}
+                        className={`w-full border-[1px] border-gray-600 bg-black p-2 mt-3 rounded-md text-white outline-none`}
+                      >
+                        <option value="" className="bg-black">
+                          Select a category
+                        </option>
+                        {categories?.map((category: any) => (
+                          <option
+                            value={category.value}
+                            key={category.value}
+                            className="bg-black"
+                          >
+                            {category.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  />
+                )}
+                {errors.category && (
+                  <span className="text-red-500 text-sm">
+                    {errors.category.message as string}
+                  </span>
+                )}
+              </div>
+              {/* Subcategory */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-200">
+                  Product Subcategory *
+                </label>
+                {isLoading ? (
+                  <p className="text-gray-200 mt-2">Loading subcategories...</p>
+                ) : isError ? (
+                  <p className="text-red-500 mt-2">
+                    Failed to load subcategories.
+                  </p>
+                ) : (
+                  <Controller
+                    control={control}
+                    name="subcategory"
+                    rules={{ required: "Product subcategory is required" }}
+                    render={({ field }) => (
+                      <select
+                        {...field}
+                        className={`w-full border-[1px] border-gray-600 bg-black p-2 mt-3 rounded-md text-white outline-none`}
+                      >
+                        <option value="" className="bg-black">
+                          Select a subcategory
+                        </option>
+                        {subcategories?.map((subcategory: any) => (
+                          <option
+                            value={subcategory.value}
+                            key={subcategory.value}
+                            className="bg-black"
+                          >
+                            {subcategory.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  />
+                )}
+                {errors.subcategory && (
+                  <span className="text-red-500 text-sm">
+                    {errors.subcategory.message as string}
+                  </span>
+                )}
+              </div>
+
+              {/* Product Video */}
+              <div className="mt-4">
+                <Input
+                  label="Product Video URL"
+                  placeholder="https://youtu.com/"
+                  {...register("product_video", {
+                    pattern: {
+                      value:
+                        /https?:\/\/(?:[a-z0-9-]+\.)?[a-z0-9-]+(?:\/[a-z0-9-]+)*\.(?:[a-z]{2,})+(?:\/[^\s]*)?/i,
+                      message: "Invalid URL format",
+                    },
+                  })}
+                  className="w-full border-[1px] border-gray-600 bg-black p-2 rounded-md text-white outline-none"
+                />
+                {errors.product_video && (
+                  <span className="text-red-500 text-sm">
+                    {errors.product_video.message as string}
+                  </span>
+                )}
+              </div>
+              {/* Product Reguler Price */}
+              <div className="mt-4">
+                <Input
+                  label="Product Reguler Price"
+                  placeholder="20$"
+                  {...register("product_reguler_price", {
+                    valueAsNumber: true,
+                    min: {
+                      value: 1,
+                      message: "Product reguler price must be greater than 0",
+                    },
+                    required: "Product reguler price is required",
+                  })}
+                  className="w-full border-[1px] border-gray-600 bg-black p-2 rounded-md text-white outline-none"
+                />
+                {errors.product_reguler_price && (
+                  <span className="text-red-500 text-sm">
+                    {errors.product_reguler_price.message as string}
+                  </span>
+                )}
+              </div>
+              {/* sale price */}
+              <div className="mt-4">
+                <Input
+                  label="Product Sale Price"
+                  placeholder="15$"
+                  {...register("product_sale_price", {
+                    valueAsNumber: true,
+                    min: {
+                      value: 1,
+                      message: "Product sale price must be greater than 0",
+                    },
+                    required: "Product sale price is required",
+                  })}
+                  className="w-full border-[1px] border-gray-600 bg-black p-2 rounded-md text-white outline-none"
+                />
+                {errors.product_sale_price && (
+                  <span className="text-red-500 text-sm">
+                    {errors.product_sale_price.message as string}
+                  </span>
+                )}
+              </div>
+              {/* product stock */}
+              <div className="mt-4">
+                <Input
+                  label="Product Stock *
+                  "
+                  placeholder="10"
+                  {...register("product_stock", {
+                    valueAsNumber: true,
+                    min: {
+                      value: 1,
+                      message: "Product stock must be greater than 0",
+                    },
+                    required: "Product stock is required",
+                  })}
+                  className="w-full border-[1px] border-gray-600 bg-black p-2 rounded-md text-white outline-none"
+                />
+                {errors.product_stock && (
+                  <span className="text-red-500 text-sm">
+                    {errors.product_stock.message as string}
+                  </span>
+                )}
+              </div>
+              {/* Product size */}
+              <div className="mt-4">
+                <SizeSelector control={control} />
+              </div>
+              {/* Select Discount Code */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-200 mb-2">
+                  Select Discount Code
+                </label>
+                {discountLoading ? (
+                  <p className="text-gray-400">Loading discount codes...</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {discountCodes?.map((code: any) => (
+                      <button
+                        key={code.id}
+                        type="button"
+                        className={`px-3 py-2 bg-black rounded-md text-sm font-medium border transition-colors ${
+                          (watch("discountCodes") || []).includes(code.id)
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-black text-white border-gray-600 hover:bg-inherit"
+                        }`}
+                        onClick={() => {
+                          const currentSelection = watch("discountCodes") || [];
+                          const updatedSelection = currentSelection.includes(
+                            code.id
+                          )
+                            ? currentSelection.filter(
+                                (id: string) => id !== code.id
+                              )
+                            : [...currentSelection, code.id];
+                          setValue("discountCodes", updatedSelection);
+                        }}
+                      >
+                        {code.discountCode}{" "}
+                        {code.discountType === "percentage"
+                          ? `(${code.discountValue}%)`
+                          : `($${code.discountValue})`}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
+      </div>
+      <div className="flex  justify-end mt-6 gap-3">
+        {isChanged && (
+          <button
+            type="button"
+            className="px-4 py-3 flex border-[1px] border-gray-600 text-white hover:bg-gray-600 transition-colors rounded-md"
+            onClick={handleSaveDraft}
+          >
+            <LucideDraftingCompass className="mr-2" />
+            Save Draft
+          </button>
+        )}
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="px-4 py-3 flex bg-blue-700 text-white hover:bg-blue-500 transition-colors rounded-md"
+          onClick={handleSubmit(onSubmit)}
+        >
+          <Save className="mr-2" />
+          {isLoading ? "Creating..." : "Create"}
+        </button>
       </div>
     </form>
   );

@@ -33,13 +33,13 @@ axiosInstance.interceptors.request.use(
 );
 
 // handle expired token and refresh logic
-axiosInstance.interceptors.request.use(
+axiosInstance.interceptors.response.use(
     (Response) => Response,
     async (error) => {
         const originalRequest = error.config;
 
         // prevent infinite retry loop
-        if (error.Response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry) {
             if (isRefreshing) {
                 return new Promise((resolve) => {
                     subscribeTokenRefresh(() => resolve(axiosInstance(originalRequest)));
