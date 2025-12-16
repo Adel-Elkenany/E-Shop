@@ -39,7 +39,7 @@ axiosInstance.interceptors.response.use(
         const originalRequest = error.config;
 
         // prevent infinite retry loop
-        if (error.Response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry) {
             if (isRefreshing) {
                 return new Promise((resolve) => {
                     subscribeTokenRefresh(() => resolve(axiosInstance(originalRequest)));
